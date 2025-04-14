@@ -7,6 +7,7 @@ import (
 	"log"
 	"os"
 	"strings"
+	"time"
 
 	_ "github.com/lib/pq"
 )
@@ -67,9 +68,11 @@ func main() {
 				//fmt.Println(longquery)
 				//queryArray := strings.Split(longquery, ";")
 				//fmt.Printf("%v\n", queryArray[0])
+				var durations []time.Duration
+				start := time.Now()
 				rows, err := db.Query(longquery)
 				if err != nil {
-					log.Fatal("Query1 error:", err)
+					log.Fatal("Query error:", err)
 				}
 				defer rows.Close()
 				//fmt.Println("Users:")
@@ -83,8 +86,33 @@ func main() {
 					}
 					fmt.Printf("MaxCPU: %f, MinCPU: %f\n", maxusage, minusage)
 				}
+				duration := time.Since(start)
+				durations = append(durations, duration)
+				fmt.Printf("QueryNumber %d: %v\n", i+1, duration)
+				var total time.Duration
+				var min = durations[0]
+				var max = durations[0]
+
+				for _, d := range durations {
+					total += d
+					if d < min {
+						min = d
+					}
+					if d > max {
+						max = d
+					}
+				}
+
+				avg := total / time.Duration(len(durations))
+
+				fmt.Println("\nBenchmark Results:")
+				//fmt.Printf("Runs: %d\n", runs)
+				fmt.Printf("Min: %v\n", min)
+				fmt.Printf("Max: %v\n", max)
+				fmt.Printf("Avg: %v\n", avg)
 
 			}
+
 		}
 	}
 }
