@@ -4,6 +4,7 @@ import (
 	"database/sql"
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"strings"
 
@@ -61,10 +62,27 @@ func main() {
 			}
 
 			if strings.Contains(row[columnIndex], filter[j]) {
+				fmt.Println(row[0])
 				longquery := fmt.Sprintf("select max(usage), min(usage) from cpu_usage where host='%s' and ts between '%s' and '%s';", row[0], row[1], row[2])
 				//fmt.Println(longquery)
-				queryArray := strings.Split(longquery, ";")
-				fmt.Printf("%v\n", queryArray[0])
+				//queryArray := strings.Split(longquery, ";")
+				//fmt.Printf("%v\n", queryArray[0])
+				rows, err := db.Query(longquery)
+				if err != nil {
+					log.Fatal("Query1 error:", err)
+				}
+				defer rows.Close()
+				//fmt.Println("Users:")
+				for rows.Next() {
+					var maxusage float32
+					var minusage float32
+
+					err := rows.Scan(&maxusage, &minusage)
+					if err != nil {
+						log.Fatal(err)
+					}
+					fmt.Printf("MaxCPU: %f, MinCPU: %f\n", maxusage, minusage)
+				}
 
 			}
 		}
